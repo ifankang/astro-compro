@@ -2,19 +2,26 @@
 import pkg from 'contentful';
 const { createClient } = pkg;
 
-const client = createClient({
-  space: import.meta.env.CONTENTFUL_SPACE_ID,
-  accessToken: import.meta.env.CONTENTFUL_ACCESS_TOKEN,
-  host: 'cdn.contentful.com',
-});
+// Only initialize clients if we have the required environment variables
+let client: any = null;
+let previewClient: any = null;
 
-const previewClient = import.meta.env.CONTENTFUL_PREVIEW_TOKEN
-  ? createClient({
-      space: import.meta.env.CONTENTFUL_SPACE_ID,
-      accessToken: import.meta.env.CONTENTFUL_PREVIEW_TOKEN,
-      host: 'preview.contentful.com',
-    })
-  : client;
+// Check if we're in a browser-like environment and have required env vars
+if (typeof self !== 'undefined' && import.meta.env.CONTENTFUL_SPACE_ID && import.meta.env.CONTENTFUL_ACCESS_TOKEN) {
+  client = createClient({
+    space: import.meta.env.CONTENTFUL_SPACE_ID,
+    accessToken: import.meta.env.CONTENTFUL_ACCESS_TOKEN,
+    host: 'cdn.contentful.com',
+  });
+
+  previewClient = import.meta.env.CONTENTFUL_PREVIEW_TOKEN
+    ? createClient({
+        space: import.meta.env.CONTENTFUL_SPACE_ID,
+        accessToken: import.meta.env.CONTENTFUL_PREVIEW_TOKEN,
+        host: 'preview.contentful.com',
+      })
+    : client;
+}
 
 export interface BlogPost {
   id: string;
