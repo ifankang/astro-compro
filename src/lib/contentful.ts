@@ -1,0 +1,98 @@
+// Contentful integration utility
+import pkg from 'contentful';
+const { createClient } = pkg;
+
+const client = createClient({
+  space: import.meta.env.CONTENTFUL_SPACE_ID,
+  accessToken: import.meta.env.CONTENTFUL_ACCESS_TOKEN,
+  host: 'cdn.contentful.com',
+});
+
+const previewClient = import.meta.env.CONTENTFUL_PREVIEW_TOKEN
+  ? createClient({
+      space: import.meta.env.CONTENTFUL_SPACE_ID,
+      accessToken: import.meta.env.CONTENTFUL_PREVIEW_TOKEN,
+      host: 'preview.contentful.com',
+    })
+  : client;
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  pubDate: string;
+  updatedDate?: string;
+  author: string;
+  body: string;
+  heroImage?: {
+    url: string;
+    title?: string;
+  };
+}
+
+export async function getBlogPosts(preview = false): Promise<BlogPost[]> {
+  const contentfulClient = preview ? previewClient : client;
+
+  try {
+    const entries = await contentfulClient.getEntries({
+      content_type: 'blogPost',
+      order: ['-sys.createdAt'],
+    });
+
+    return entries.items.map((item: any) => ({
+      id: item.sys.id,
+      title: item.fields.title,
+      slug: item.fields.slug,
+      description: item.fields.description,
+      pubDate: item.fields.pubDate,
+      updatedDate: item.fields.updatedDate,
+      author: item.fields.author,
+      body: item.fields.body,
+      heroImage: item.fields.heroImage
+        ? {
+            url: `https:${item.fields.heroImage.fields.file.url}`,
+            title: item.fields.heroImage.fields.title,
+          }
+        : undefined,
+    }));
+  } catch (error) {
+    console.error('Error fetching blog posts from Contentful:', error);
+    return [];
+  }
+}
+
+export async function getBlogPostBySlug(slug: string, preview = false): Promise<BlogPost | null> {
+  const contentfulClient = preview ? previewClient : client;
+
+  try {
+    const entries = await contentfulClient.getEntries({
+      content_type: 'blogPost',
+      'fields.slug': slug,
+      limit: 1,
+    });
+
+    if (entries.items.length === 0) return null;
+
+    const item = entries.items[0] as any;
+    return {
+      id: item.sys.id,
+      title: item.fields.title,
+      slug: item.fields.slug,
+      description: item.fields.description,
+      pubDate: item.fields.pubDate,
+      updatedDate: item.fields.updatedDate,
+      author: item.fields.author,
+      body: item.fields.body,
+      heroImage: item.fields.heroImage
+        ? {
+            url: `https:${item.fields.heroImage.fields.file.url}`,
+            title: item.fields.heroImage.fields.title,
+          }
+        : undefined,
+    };
+  } catch (error) {
+    console.error('Error fetching blog post from Contentful:', error);
+    return null;
+  }
+}

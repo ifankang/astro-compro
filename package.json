@@ -17,6 +17,8 @@
 		"@astrojs/rss": "4.0.14",
 		"@astrojs/sitemap": "3.6.0",
 		"astro": "5.16.2",
+		"contentful": "^10.15.0",
+		"marked": "^12.0.0",
 		"typescript": "5.9.3"
 	},
 	"devDependencies": {
